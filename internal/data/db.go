@@ -11,7 +11,7 @@ const dbpath = "crm.db"
 func OpenDB() (*sql.DB, error) {
 	db, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
-		return nil, error
+		return nil, err
 	}
 	if err := db.Ping(); err != nil {
 		return nil, err
