@@ -61,7 +61,9 @@ func (r DealRepository) Create(d *domain.Deal) error {
 
 func (r DealRepository) ListAll() ([]domain.Deal, error) {
 	rows, err := r.db.Query(`
-		SELECT *
+		SELECT id, deal_name, customer_name, contact_person, phone, email,
+               estimated_value, stage, source, created_at, updated_at,
+               next_action, next_action_due
 		FROM deals
 		ORDER BY created_at DESC
 	`)
@@ -101,12 +103,17 @@ func (r DealRepository) ListAll() ([]domain.Deal, error) {
 
 		d.Stage = domain.Stage(stageStr)
 
-		if t, err := time.Parse(time.RFC3339, createdStr); err == nil {
-            d.CreatedAt = t
-        }
-        if t, err := time.Parse(time.RFC3339, updatedStr); err == nil {
-            d.UpdatedAt = t
-        }
+		t, err := time.Parse(time.RFC3339, createdStr)
+		if err != nil {
+			return domain.Deal{}, err
+		}
+		d.CreatedAt = t
+
+		t, err = time.Parse(time.RFC3339, updatedStr)
+		if err != nil {
+			return domain.Deal{}, err
+		}
+		d.UpdatedAt = t
         if nextActionDueS != nil {
             if t, err := time.Parse(time.RFC3339, *nextActionDueS); err == nil {
                 d.NextActionDue = &t
@@ -117,4 +124,63 @@ func (r DealRepository) ListAll() ([]domain.Deal, error) {
 	}
 
 	return deals, rows.Err()
+}
+
+func (r DealRepository) GetByID(id int64) (domain.Deal, error) {
+	var (
+        d              domain.Deal
+        createdStr     string
+        updatedStr     string
+        stageStr       string
+        nextActionDueS *string
+    )
+	
+	row := r.db.QueryRow(`
+		SELECT id, deal_name, customer_name, contact_person, phone, email,
+               estimated_value, stage, source, created_at, updated_at,
+               next_action, next_action_due
+		FROM deals
+		WHERE id = $1
+	`, id)
+
+	err := row.Scan(
+		&d.ID,
+        &d.DealName,
+        &d.CustomerName,
+        &d.ContactPerson,
+        &d.Phone,
+        &d.Email,
+        &d.EstimatedValue,
+        &stageStr,
+        &d.Source,
+        &createdStr,
+        &updatedStr,
+        &d.NextAction,
+        &nextActionDueS,
+	)
+	if err != nil {
+		return domain.Deal{}, err
+	}
+
+	d.Stage = domain.Stage(stageStr)
+
+	t, err := time.Parse(time.RFC3339, createdStr)
+	if err != nil {
+		return domain.Deal{}, err
+	}
+	d.CreatedAt = t
+
+	t, err = time.Parse(time.RFC3339, updatedStr)
+	if err != nil {
+		return domain.Deal{}, err
+	}
+	d.UpdatedAt = t
+	
+	if nextActionDueS != nil {
+		if t, err := time.Parse(time.RFC3339, nextActionDueS); err == nil {
+			d.NextActionDue = &t
+		}
+	}
+
+	return d, nil
 }
