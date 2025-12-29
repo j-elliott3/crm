@@ -105,13 +105,13 @@ func (r DealRepository) ListAll() ([]domain.Deal, error) {
 
 		t, err := time.Parse(time.RFC3339, createdStr)
 		if err != nil {
-			return domain.Deal{}, err
+			return nil, err
 		}
 		d.CreatedAt = t
 
 		t, err = time.Parse(time.RFC3339, updatedStr)
 		if err != nil {
-			return domain.Deal{}, err
+			return nil, err
 		}
 		d.UpdatedAt = t
         if nextActionDueS != nil {
@@ -140,7 +140,7 @@ func (r DealRepository) GetByID(id int64) (domain.Deal, error) {
                estimated_value, stage, source, created_at, updated_at,
                next_action, next_action_due
 		FROM deals
-		WHERE id = $1
+		WHERE id = ?
 	`, id)
 
 	err := row.Scan(
@@ -183,4 +183,72 @@ func (r DealRepository) GetByID(id int64) (domain.Deal, error) {
 	}
 
 	return d, nil
+}
+
+func (r DealRepository) ListByStage(stage domain.Stage) ([]domain.Deal, error) {
+	rows, err := r.db.Query(`
+		SELECT id, deal_name, customer_name, contact_person, phone, email,
+               estimated_value, stage, source, created_at, updated_at,
+               next_action, next_action_due
+		FROM deals
+		WHERE stage = ?
+		ORDER BY created_at DESC
+	`, string(stage))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var deals []domain.Deal
+	for rows.Next() {
+		var (
+			d 				domain.Deal
+			createdStr 		string
+			updatedStr 		string
+			stageStr 		string
+			nextActionDueS 	*string
+		)
+
+		err := rows.Scan(
+			&d.ID,
+            &d.DealName,
+            &d.CustomerName,
+            &d.ContactPerson,
+            &d.Phone,
+            &d.Email,
+            &d.EstimatedValue,
+            &stageStr,
+            &d.Source,
+            &createdStr,
+            &updatedStr,
+            &d.NextAction,
+            &nextActionDueS,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		d.Stage = domain.Stage(stageStr)
+
+		t, err := time.Parse(time.RFC3339, createdStr)
+		if err != nil {
+			return nil, err
+		}
+		d.CreatedAt = t
+
+		t, err = time.Parse(time.RFC3339, updatedStr)
+		if err != nil {
+			return nil, err
+		}
+		d.UpdatedAt = t
+        if nextActionDueS != nil {
+            if t, err := time.Parse(time.RFC3339, *nextActionDueS); err == nil {
+                d.NextActionDue = &t
+            }
+        }
+
+        deals = append(deals, d)
+	}
+
+	return deals, rows.Err()
 }
