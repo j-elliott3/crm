@@ -2,11 +2,15 @@ package main
 
 import (
 	"log"
-	"github.com/j-elliott3/projects/crm/internal/data"
+
+	"fyne.io/fyne/v2/app"
+
+	"github.com/j-elliott3/crm/internal/data"
+	"github.com/j-elliott3/crm/internal/ui"
 )
 
 func main() {
-	db, err := data.openDB()
+	db, err := data.OpenDB()
 	if err != nil {
 		log.Fatalf("open db: %v", err)
 	}
@@ -15,4 +19,10 @@ func main() {
 	if err := data.RunMigration(db); err != nil {
 		log.Fatalf("migrations: %v", err)
 	}
+
+	dealRepo := data.NewDealRespository(db)
+
+	fyneApp := app.New()
+	w := ui.NewMainWindow(fyneApp, dealRepo)
+	w.ShowAndRun()
 }

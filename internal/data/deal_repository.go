@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/j-elliott3/projects/crm/internal/domain"
+	"github.com/j-elliott3/crm/internal/domain"
 )
 
 type DealRepository struct {
