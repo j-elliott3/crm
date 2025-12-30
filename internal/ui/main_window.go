@@ -13,10 +13,10 @@ import (
 )
 
 type MainWindow struct {
-	app 	fyne.app
-	window 	fyne.window
+	app 	fyne.App
+	window 	fyne.Window
 	repo 	data.DealRepository
-	deals 	[]domain.deal
+	deals 	[]domain.Deal
 	list 	*widget.List
 	status 	*widget.Label
 }
@@ -59,7 +59,7 @@ func (mw *MainWindow) setupUI() {
 
 	newDummyBtn := widget.NewButton("Add Dummy Deal", func() {
 		if err := mw.addDummyDeal(); err != nil {
-			mw.status.SetText("Error: " + err)
+			mw.status.SetText("Error: " + err.Error())
 		} else {
 			mw.status.SetText("Dummy deal added")
 			mw.refreshDeals()
@@ -80,7 +80,7 @@ func (mw *MainWindow) setupUI() {
 func (mw *MainWindow) refreshDeals() {
 	deals, err := mw.repo.ListAll()
 	if err != nil {
-		mw.status.SetText("Error loading deal")
+		mw.status.SetText("Error loading deals: " + err.Error())
 		return
 	}
 	mw.deals = deals

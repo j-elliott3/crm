@@ -2,6 +2,8 @@ package domain
 
 import "time"
 
+type Stage string
+
 const (
 	StageNewLead 	Stage = "New Lead"
 	StageQualified 	Stage = "Qualified"

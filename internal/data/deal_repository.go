@@ -16,13 +16,13 @@ func NewDealRepository(db *sql.DB) DealRepository {
 }
 
 func (r DealRepository) Create(d *domain.Deal) error {
-	now := time.now().UTC()
+	now := time.Now().UTC()
 	d.CreatedAt = now
 	d.UpdatedAt = now
 
 	var nextDue *string
 	if d.NextActionDue != nil {
-		s := d.NextActionDue.UTC().Format(time)
+		s := d.NextActionDue.UTC().Format(time.RFC3339)
 		nextDue = &s
 	}
 
@@ -177,7 +177,7 @@ func (r DealRepository) GetByID(id int64) (domain.Deal, error) {
 	d.UpdatedAt = t
 	
 	if nextActionDueS != nil {
-		if t, err := time.Parse(time.RFC3339, nextActionDueS); err == nil {
+		if t, err := time.Parse(time.RFC3339, *nextActionDueS); err == nil {
 			d.NextActionDue = &t
 		}
 	}

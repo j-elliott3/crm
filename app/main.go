@@ -16,11 +16,11 @@ func main() {
 	}
 	defer db.Close()
 
-	if err := data.RunMigration(db); err != nil {
+	if err := data.RunMigrations(db); err != nil {
 		log.Fatalf("migrations: %v", err)
 	}
 
-	dealRepo := data.NewDealRespository(db)
+	dealRepo := data.NewDealRepository(db)
 
 	fyneApp := app.New()
 	w := ui.NewMainWindow(fyneApp, dealRepo)

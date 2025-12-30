@@ -2,7 +2,7 @@ package data
 
 import "database/sql"
 
-func RunMigration(db *sql.DB) error {
+func RunMigrations(db *sql.DB) error {
 	stmt := `
 CREATE TABLE IF NOT EXISTS deals (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -20,6 +20,6 @@ CREATE TABLE IF NOT EXISTS deals (
     next_action_due TEXT
 );
 `
-	_, err := db.exec(stmt)
+	_, err := db.Exec(stmt)
 	return err
 }

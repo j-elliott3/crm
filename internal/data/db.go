@@ -5,7 +5,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-const dbpath = "crm.db"
+const dbPath = "crm.db"
 
 
 func OpenDB() (*sql.DB, error) {
