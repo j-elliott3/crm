@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"strconv"
     "time"
 
     "fyne.io/fyne/v2"
@@ -57,17 +58,12 @@ func (mw *MainWindow) setupUI() {
 		},
 	)
 
-	newDummyBtn := widget.NewButton("Add Dummy Deal", func() {
-		if err := mw.addDummyDeal(); err != nil {
-			mw.status.SetText("Error: " + err.Error())
-		} else {
-			mw.status.SetText("Dummy deal added")
-			mw.refreshDeals()
-		}
+	newDealBtn := widget.NewButton("New Deal", func() {
+		mw.showNewDealForm()
 	})
 
 	content := container.NewBorder(
-		container.NewVBox(newDummyBtn, mw.status),
+		container.NewVBox(newDealBtn, mw.status),
 		nil,
 		nil,
 		nil,
@@ -87,22 +83,111 @@ func (mw *MainWindow) refreshDeals() {
 	mw.list.Refresh()
 }
 
-func (mw *MainWindow) addDummyDeal() error {
-	d := &domain.Deal{
-		DealName:      "Test Deal",
-        CustomerName:  "Acme Corp",
-        ContactPerson: "Jane Doe",
-        Phone:         "555-1234",
-        Email:         "jane@example.com",
-        EstimatedValue: 10000,
-        Stage:         domain.StageNewLead,
-        Source:        "manual",
-        NextAction:    "Call customer",
-        // NextActionDue: can leave nil or set:
-        NextActionDue: func() *time.Time {
-            t := time.Now().Add(24 * time.Hour).UTC()
-            return &t
-        }(),
+func (mw *MainWindow) showNewDealForm() {
+	dealNameEntry := widget.NewEntry()
+	customerEntry := widget.NewEntry()
+	contactEntry := widget.NewEntry()
+	phoneEntry := widget.NewEntry()
+	emailEntry := widget.NewEntry()
+	valueEntry := widget.NewEntry()
+	nextActionEntry := widget.NewEntry()
+
+
+	// Dropdown for stage
+	stageSelect := widget.NewSelect(
+		[]string{
+			string(domain.StageNewLead),
+			string(domain.StageQualified),
+			string(domain.StageSurvery),
+			string(domain.StageQuoteSent),
+			string(domain.StageWon),
+			string(domain.StageLost),
+		},
+		nil,
+	)
+	stageSelect.SetSelected(string(domain.StageNewLead))
+
+	form := &widget.Form{
+		Items: []*widget.FormItem{
+			{Text: "Deal Name", Widget: dealNameEntry},
+            {Text: "Customer Name", Widget: customerEntry},
+            {Text: "Contact Person", Widget: contactEntry},
+            {Text: "Phone", Widget: phoneEntry},
+            {Text: "Email", Widget: emailEntry},
+            {Text: "Estimated Value", Widget: valueEntry},
+            {Text: "Stage", Widget: stageSelect},
+            {Text: "Next Action", Widget: nextActionEntry},
+		},
+		OnSubmit: func() {
+			if err := mw.createDealFromForm(
+				dealNameEntry.Text,
+                customerEntry.Text,
+                contactEntry.Text,
+                phoneEntry.Text,
+                emailEntry.Text,
+                valueEntry.Text,
+                stageSelect.Selected,
+                nextActionEntry.Text,
+			); err != nil {
+				mw.status.SetText("Error: " + err.Error())
+			} else {
+				mw.status.SetText("Deal created")
+				mw.refreshDeals()
+			}
+		},
+		OnCancel: func() {},
 	}
+
+	dialog := widget.NewModelPopUp(
+		container.NewVBox(
+			widget.NewLabel("New Deal"),
+			form,
+		),
+		mw.window.Canvas(),
+	)
+
+	// Close the dialog when form submits or cancels
+    oldOnSubmit := form.OnSubmit
+    form.OnSubmit = func() {
+        oldOnSubmit()
+        dialog.Hide()
+    }
+    oldOnCancel := form.OnCancel
+    form.OnCancel = func() {
+        oldOnCancel()
+        dialog.Hide()
+    }
+
+    dialog.Show()
+}
+
+
+func (mw *MainWindow) createDealFromForm(
+	dealname, customer, contact, phone, email, valueStr, stageStr, nextAction string,
+) error {
+	if dealName == "" || customer == "" {
+		return fmt.Errorf("deal name and customer name are required")
+	}
+
+	var value float64
+	if valueStr != "" {
+		value, err := strconv.ParseFloat(valueStr, 64)
+		if err != nil {
+			return fmt.Errorf("invalid estimated value: %w", err)
+		}
+	}
+
+	d := &domain.Deal{
+		DealName:       dealName,
+        CustomerName:   customer,
+        ContactPerson:  contact,
+        Phone:          phone,
+        Email:          email,
+        EstimatedValue: value,
+        Stage:          domain.Stage(stageStr),
+        Source:         "manual",
+        NextAction:     nextAction,
+	}
+
 	return mw.repo.Create(d)
 }
