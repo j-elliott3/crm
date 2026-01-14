@@ -3,7 +3,6 @@ package ui
 import (
 	"fmt"
 	"strconv"
-    "time"
 
     "fyne.io/fyne/v2"
     "fyne.io/fyne/v2/container"
@@ -98,7 +97,7 @@ func (mw *MainWindow) showNewDealForm() {
 		[]string{
 			string(domain.StageNewLead),
 			string(domain.StageQualified),
-			string(domain.StageSurvery),
+			string(domain.StageSurvey),
 			string(domain.StageQuoteSent),
 			string(domain.StageWon),
 			string(domain.StageLost),
@@ -138,7 +137,7 @@ func (mw *MainWindow) showNewDealForm() {
 		OnCancel: func() {},
 	}
 
-	dialog := widget.NewModelPopUp(
+	dialog := widget.NewModalPopUp(
 		container.NewVBox(
 			widget.NewLabel("New Deal"),
 			form,
@@ -163,7 +162,7 @@ func (mw *MainWindow) showNewDealForm() {
 
 
 func (mw *MainWindow) createDealFromForm(
-	dealname, customer, contact, phone, email, valueStr, stageStr, nextAction string,
+	dealName, customer, contact, phone, email, valueStr, stageStr, nextAction string,
 ) error {
 	if dealName == "" || customer == "" {
 		return fmt.Errorf("deal name and customer name are required")
@@ -171,7 +170,8 @@ func (mw *MainWindow) createDealFromForm(
 
 	var value float64
 	if valueStr != "" {
-		value, err := strconv.ParseFloat(valueStr, 64)
+		var err error
+		value, err = strconv.ParseFloat(valueStr, 64)
 		if err != nil {
 			return fmt.Errorf("invalid estimated value: %w", err)
 		}
