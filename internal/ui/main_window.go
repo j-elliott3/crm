@@ -13,12 +13,13 @@ import (
 )
 
 type MainWindow struct {
-	app 	fyne.App
-	window 	fyne.Window
-	repo 	data.DealRepository
-	deals 	[]domain.Deal
-	list 	*widget.List
-	status 	*widget.Label
+	app 		fyne.App
+	window 		fyne.Window
+	repo 		data.DealRepository
+	deals 		[]domain.Deal
+	list 		*widget.List
+	status 		*widget.Label
+	stageFilter *widget.Select
 }
 
 func NewMainWindow(app fyne.App, repo data.DealRepository) fyne.Window {
@@ -38,6 +39,22 @@ func NewMainWindow(app fyne.App, repo data.DealRepository) fyne.Window {
 }
 
 func (mw *MainWindow) setupUI() {
+	mw.stageFilter = widget.NewSelect(
+		[]string{
+			"All",
+			string(domain.StageNewLead),
+			string(domain.StageQualified),
+			string(domain.StageSurvey),
+			string(domain.StageQuoteSent),
+			string(domain.StageWon),
+			string(domain.StageLost),
+		},
+		nil,
+	)
+	mw.stageFilter.SetSelected("All")
+	mw.stageFilter.OnChanged = func(selected string) {
+    	mw.applyStageFilter(selected)
+	}
 	// List widget: displays deals slice
 	mw.list = widget.NewList(
 		func() int {
@@ -57,12 +74,14 @@ func (mw *MainWindow) setupUI() {
 		},
 	)
 
-	newDealBtn := widget.NewButton("New Deal", func() {
-		mw.showNewDealForm()
-	})
+	topBar := container.NewHBox(
+		widget.NewButton("New Deal", func() { mw.showNewDealForm() }),
+		widget.NewLabel("Stage:"),
+		mw.stageFilter,
+	)
 
 	content := container.NewBorder(
-		container.NewVBox(newDealBtn, mw.status),
+		container.NewVBox(topBar, mw.status),
 		nil,
 		nil,
 		nil,
@@ -131,7 +150,13 @@ func (mw *MainWindow) showNewDealForm() {
 				mw.status.SetText("Error: " + err.Error())
 			} else {
 				mw.status.SetText("Deal created")
-				mw.refreshDeals()
+
+				selected := mw.stageFilter.Selected
+				if selected == "" || selected == "All" {
+					mw.refreshDeals()
+				} else {
+					mw.applyStageFilter(selected)
+				}
 			}
 		},
 		OnCancel: func() {},
@@ -190,4 +215,19 @@ func (mw *MainWindow) createDealFromForm(
 	}
 
 	return mw.repo.Create(d)
+}
+
+func (mw *MainWindow) applyStageFilter(selected string) {
+    if selected == "All" || selected == "" {
+        mw.refreshDeals()
+        return
+    }
+
+    deals, err := mw.repo.ListByStage(domain.Stage(selected))
+    if err != nil {
+        mw.status.SetText("Error loading deals: " + err.Error())
+        return
+    }
+    mw.deals = deals
+    mw.list.Refresh()
 }
