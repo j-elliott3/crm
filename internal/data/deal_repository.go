@@ -253,7 +253,7 @@ func (r DealRepository) ListByStage(stage domain.Stage) ([]domain.Deal, error) {
 	return deals, rows.Err()
 }
 
-func (r DealRepository) Update[T any](field, value T, id int64) error {
+func (r DealRepository) Update(d *domain.Deal) error {
     d.UpdatedAt = time.Now().UTC()
 
     var nextDue *string
