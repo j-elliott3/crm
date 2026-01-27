@@ -252,3 +252,46 @@ func (r DealRepository) ListByStage(stage domain.Stage) ([]domain.Deal, error) {
 
 	return deals, rows.Err()
 }
+
+func (r DealRepository) Update[T any](field, value T, id int64) error {
+    d.UpdatedAt = time.Now().UTC()
+
+    var nextDue *string
+    if d.NextActionDue != nil {
+        s := d.NextActionDue.UTC().Format(time.RFC3339)
+        nextDue = &s
+    }
+
+    _, err := r.db.Exec(`
+        UPDATE deals
+        SET
+            deal_name       = ?,
+            customer_name   = ?,
+            contact_person  = ?,
+            phone           = ?,
+            email           = ?,
+            estimated_value = ?,
+            stage           = ?,
+            source          = ?,
+            created_at      = ?,  -- optional; you could leave this alone
+            updated_at      = ?,
+            next_action     = ?,
+            next_action_due = ?
+        WHERE id = ?
+    `,
+        d.DealName,
+        d.CustomerName,
+        d.ContactPerson,
+        d.Phone,
+        d.Email,
+        d.EstimatedValue,
+        string(d.Stage),
+        d.Source,
+        d.CreatedAt.Format(time.RFC3339),
+        d.UpdatedAt.Format(time.RFC3339),
+        d.NextAction,
+        nextDue,
+        d.ID,
+    )
+    return err
+}
