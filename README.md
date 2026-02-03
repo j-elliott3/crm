@@ -1,4 +1,4 @@
-An all in one Customer Relations Management program written completely in Go, using Fyne for the frontend gui. Create entries with your customer data, and update your progress from cold call to successfully closed deal.
+A Customer Relations Management program you can run locally. Written completely in Go, using Fyne for the frontend. Create entries with your customer data, and update your progress from cold call to successfully closed deal.
 
 ## Running the Program
 
