@@ -78,9 +78,9 @@ func (mw *MainWindow) setupUI() {
 			o.(*widget.Label).SetText(text)
 		},
 	)
-	// NOTE: OnSelected is a Fyne List callback.
+	// OnSelected is a Fyne List callback.
 	// It is invoked when the user selects a row in the list (via click).
-	// We store the index so other parts of the UI (e.g. Edit button) know which Deal to edit.
+	// Store the index so other parts of the UI (e.g. Edit button) know which Deal to edit.
 	mw.list.OnSelected = func(id widget.ListItemID) {
     	mw.selectedIndex = int(id)
 	}
@@ -320,7 +320,7 @@ func (mw *MainWindow) showDealForm(d *domain.Deal) {
         },
     }
 
-    // We'll fill OnSubmit and OnCancel below after building the dialog.
+    // Fill OnSubmit and OnCancel below after building the dialog.
     dialog := widget.NewModalPopUp(
         container.NewVBox(
             widget.NewLabel(title),
